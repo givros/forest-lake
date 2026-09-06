@@ -1,0 +1,12 @@
+node_modules/
+dist/
+output/
+.playwright-cli/
+test-results/
+playwright-report/
+.env
+.env.*
+*.log
+*.blend1
+__pycache__/
+.DS_Store

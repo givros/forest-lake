@@ -1,0 +1,92 @@
+{
+  "conifer-a": {
+    "file": "conifer-a.glb",
+    "bytes": 743364,
+    "triangles": 2999,
+    "animation_clips": [],
+    "materials": 4,
+    "embedded_images": 3
+  },
+  "conifer-b": {
+    "file": "conifer-b.glb",
+    "bytes": 689356,
+    "triangles": 2999,
+    "animation_clips": [],
+    "materials": 4,
+    "embedded_images": 3
+  },
+  "conifer-c": {
+    "file": "conifer-c.glb",
+    "bytes": 704900,
+    "triangles": 2998,
+    "animation_clips": [],
+    "materials": 4,
+    "embedded_images": 3
+  },
+  "hiker": {
+    "file": "hiker.glb",
+    "bytes": 616892,
+    "triangles": 8532,
+    "animation_clips": [
+      "Idle",
+      "Pedal",
+      "Ride",
+      "Run",
+      "Walk"
+    ],
+    "materials": 11,
+    "embedded_images": 0
+  },
+  "horse": {
+    "file": "horse.glb",
+    "bytes": 533928,
+    "triangles": 9134,
+    "animation_clips": [
+      "Gallop",
+      "Idle",
+      "Walk"
+    ],
+    "materials": 11,
+    "embedded_images": 0
+  },
+  "mountain-bike": {
+    "file": "mountain-bike.glb",
+    "bytes": 680620,
+    "triangles": 21108,
+    "animation_clips": [],
+    "materials": 8,
+    "embedded_images": 0
+  },
+  "rock-a": {
+    "file": "rock-a.glb",
+    "bytes": 324536,
+    "triangles": 2200,
+    "animation_clips": [],
+    "materials": 1,
+    "embedded_images": 1
+  },
+  "trail-bench": {
+    "file": "trail-bench.glb",
+    "bytes": 213024,
+    "triangles": 2364,
+    "animation_clips": [],
+    "materials": 3,
+    "embedded_images": 3
+  },
+  "trail-marker": {
+    "file": "trail-marker.glb",
+    "bytes": 73032,
+    "triangles": 1099,
+    "animation_clips": [],
+    "materials": 3,
+    "embedded_images": 1
+  },
+  "trail-sign": {
+    "file": "trail-sign.glb",
+    "bytes": 459160,
+    "triangles": 5000,
+    "animation_clips": [],
+    "materials": 5,
+    "embedded_images": 3
+  }
+}

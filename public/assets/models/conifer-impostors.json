@@ -1,0 +1,53 @@
+{
+  "source": "Poly Haven fir_tree_01, CC0; original render of authorized local source models",
+  "sprites": [
+    {
+      "variant": "a",
+      "file": "conifer-a-impostor.png",
+      "width_m": 10.547701034545899,
+      "height_m": 21.095402069091797,
+      "base_y_m": 0,
+      "image_pixels": [
+        512,
+        1024
+      ],
+      "source_dimensions_m": [
+        5.250871181488037,
+        20.284040451049805,
+        5.10924768447876
+      ]
+    },
+    {
+      "variant": "b",
+      "file": "conifer-b-impostor.png",
+      "width_m": 8.052345123291015,
+      "height_m": 16.10469024658203,
+      "base_y_m": 0,
+      "image_pixels": [
+        512,
+        1024
+      ],
+      "source_dimensions_m": [
+        4.618847370147705,
+        15.485279083251953,
+        5.050131797790527
+      ]
+    },
+    {
+      "variant": "c",
+      "file": "conifer-c-impostor.png",
+      "width_m": 6.053760261535645,
+      "height_m": 12.10752052307129,
+      "base_y_m": 0,
+      "image_pixels": [
+        512,
+        1024
+      ],
+      "source_dimensions_m": [
+        4.885437965393066,
+        11.641846656799316,
+        4.624171733856201
+      ]
+    }
+  ]
+}

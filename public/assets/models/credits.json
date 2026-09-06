@@ -1,0 +1,58 @@
+{
+  "assets": [
+    {
+      "files": [
+        "horse.glb"
+      ],
+      "author": "Quaternius",
+      "source": "Ultimate Animated Animal Pack",
+      "source_url": "https://quaternius.com/packs/ultimateanimatedanimals.html",
+      "license": "CC0-1.0",
+      "modifications": "Normalized original horse rig; baked Idle/Walk/Gallop; original project saddle, blanket, reins and bridle."
+    },
+    {
+      "files": [
+        "conifer-a.glb",
+        "conifer-b.glb",
+        "conifer-c.glb",
+        "conifer-a-impostor.png",
+        "conifer-b-impostor.png",
+        "conifer-c-impostor.png"
+      ],
+      "author": "Poly Haven",
+      "source": "fir_tree_01",
+      "source_url": "https://polyhaven.com/a/fir_tree_01",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "modifications": "Original local preparation, mesh simplification, embedded reduced textures and original transparent renders."
+    },
+    {
+      "files": [
+        "rock-a.glb"
+      ],
+      "author": "Poly Haven",
+      "source": "boulder_01",
+      "source_url": "https://polyhaven.com/a/boulder_01",
+      "license": "CC0-1.0",
+      "license_url": "https://polyhaven.com/license",
+      "modifications": "Mesh decimation and embedded reduced textures."
+    },
+    {
+      "files": [
+        "mountain-bike.glb",
+        "hiker.glb",
+        "trail-sign.glb",
+        "trail-bench.glb",
+        "trail-marker.glb"
+      ],
+      "author": "Alpine Hike project",
+      "source": "Original project-authored Blender geometry, materials and animation",
+      "license": "Original project assets",
+      "third_party_assets": false
+    }
+  ],
+  "verified_on": "2026-09-06",
+  "units": "meters",
+  "up_axis": "+Y",
+  "travel_forward_axis": "+Z"
+}

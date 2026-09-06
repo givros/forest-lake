@@ -1,0 +1,17 @@
+{
+  "provider": "Poly Haven",
+  "license": "CC0-1.0",
+  "license_url": "https://polyhaven.com/license",
+  "assets": [
+    {"file": "turf.jpg", "source_url": "https://polyhaven.com/a/leafy_grass"},
+    {"file": "forest-floor.jpg", "source_url": "https://polyhaven.com/a/forest_ground_04"},
+    {"file": "rock.jpg", "source_url": "https://polyhaven.com/a/rock_06"},
+    {"file": "trail.jpg", "source_url": "https://polyhaven.com/a/rocky_trail_02"},
+    {"file": "dry-grass.jpg", "source_url": "https://polyhaven.com/a/withered_grass"},
+    {"file": "grass-tuft.png", "source_url": "https://polyhaven.com/a/grass_medium_02"},
+    {"file": "fern.png", "source_url": "https://polyhaven.com/a/fern_02"},
+    {"file": "shrub.png", "source_url": "https://polyhaven.com/a/shrub_02"}
+  ],
+  "modifications": "Local texture resizing, plant atlas preparation and color adjustments for the browser edition.",
+  "original_project_assets": ["height.r16", "outer-height.r16", "route.bin", "road-distance.r8", "massif.bin", "forest.bin", "rocks.bin", "mountain-ecology.png", "native-surface.png"]
+}

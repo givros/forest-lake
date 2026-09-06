@@ -1,0 +1,26 @@
+{
+  "status": "passed",
+  "routeLengthMeters": 3925.2134733966022,
+  "positiveAscentMeters": 812.8632410210018,
+  "lakeAltitudeMeters": 2300,
+  "startAltitudeMeters": 1500.0260416666667,
+  "nativeHeightBytesIdentical": true,
+  "nativeHeightSHA256": "ca5559217d92ed868706c7406188d52c2c8f426ce339e893934e6296e73a7bd4",
+  "routeCoordinateMaximumErrorMeters": 3.0516394872392993e-05,
+  "forestCount": 51979,
+  "groundedDistantTrees": 48000,
+  "massif": {
+    "vertices": 82152,
+    "triangles": 160020,
+    "topTriangles": 159516,
+    "nativeSeamVertices": 4032,
+    "bounds": [
+      -4406,
+      4406
+    ],
+    "outerHeightSize": 513,
+    "outerHeightOrigin": 450,
+    "outerHeightScale": 0.05
+  },
+  "assetBytes": 13176465
+}
