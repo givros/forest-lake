@@ -21,11 +21,15 @@ for(const file of files) {
     if(item.uri) assert.ok(item.uri.startsWith('data:') || fs.existsSync(path.resolve(path.dirname(file),decodeURIComponent(item.uri))),`Missing model resource: ${item.uri}`);
   }
   const triangles=(gltf.meshes??[]).flatMap(mesh=>mesh.primitives).reduce((sum,p)=>sum+(p.indices!==undefined?gltf.accessors[p.indices].count:gltf.accessors[p.attributes.POSITION].count)/3,0);
-  models[path.basename(file)]={bytes:size,triangles,animations:(gltf.animations??[]).map(a=>a.name)};
+  models[path.basename(file)]={bytes:size,triangles,animations:(gltf.animations??[]).map(a=>a.name),nodes:(gltf.nodes??[]).map(node=>node.name)};
 }
-for(const name of ['hiker.glb','horse.glb','mountain-bike.glb']) assert.ok(models[name],`Required model is missing: ${name}`);
-for(const name of ['Idle','Walk','Gallop']) assert.ok(models['horse.glb'].animations.includes(name),`Horse animation missing: ${name}`);
-for(const name of ['Idle','Walk','Run','Pedal','Ride']) assert.ok(models['hiker.glb'].animations.includes(name),`Hiker animation missing: ${name}`);
+for(const name of ['hiker.glb','mountain-bike.glb']) assert.ok(models[name],`Required model is missing: ${name}`);
+assert.ok(!models['horse.glb'],'Bike-only web assets must not include horse.glb');
+assert.ok(models['hiker.glb'].animations.includes('Pedal'),'Cyclist animation missing: Pedal');
+for(const name of ['Hips','Spine','Head','ThighL','ThighR','ShinL','ShinR','FootL','FootR','UpperArmL','UpperArmR','ForearmL','ForearmR','HandL','HandR'])
+  assert.ok(models['hiker.glb'].nodes.includes(name),`Cyclist IK bone missing: ${name}`);
+for(const name of ['Frame','FrontWheel','RearWheel','Crank','LeftPedal','RightPedal'])
+  assert.ok(models['mountain-bike.glb'].nodes.includes(name),`Bicycle animation part missing: ${name}`);
 assert.ok(bytes<180*1024*1024,`Public assets exceed the browser download budget: ${bytes}`);
 assert.ok(fs.existsSync(path.join(root,'assets/models/credits.json')));
 console.log(JSON.stringify({status:'passed',files:files.length,totalMB:Math.round(bytes/1048576*100)/100,models},null,2));

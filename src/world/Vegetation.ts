@@ -38,7 +38,7 @@ export class Vegetation {
   private dummy = new THREE.Object3D();
   private color = new THREE.Color();
 
-  constructor(private field: Heightfield, forest: Float32Array, rockData: Float32Array) {
+  constructor(private field: Heightfield, forest: Float32Array, rockData: Float32Array, private readonly mobile = false) {
     this.root.name = 'Alpine woodland, meadow plants and trail furniture';
     const variantCounts = [0, 0, 0];
     for (let i = 0; i < forest.length; i += 8) {
@@ -145,12 +145,13 @@ export class Vegetation {
       mesh.name = `Distant photographed conifer ${species}`;
       this.root.add(mesh); this.farMeshes[species] = mesh; this.farVisibility[species] = visibility;
     }));
-    this.closePools = await Promise.all(['conifer-a', 'conifer-b', 'conifer-c'].map((n) => this.loadPool(n, 64, true)));
+    this.closePools = await Promise.all(['conifer-a', 'conifer-b', 'conifer-c']
+      .map((n) => this.loadPool(n, this.mobile ? 20 : 64, !this.mobile)));
     onProgress?.('Planting grasses, ferns and wildflowers');
     await this.buildGroundcover();
-    this.rockPool = await this.loadPool('rock-a', 36, true);
+    this.rockPool = await this.loadPool('rock-a', this.mobile ? 12 : 36, !this.mobile);
     const names = ['trail-sign', 'trail-marker', 'trail-bench'];
-    await Promise.all(names.map(async (name) => { this.propPools.set(name, await this.loadPool(name, 56, true)); }));
+    await Promise.all(names.map(async (name) => { this.propPools.set(name, await this.loadPool(name, 56, !this.mobile)); }));
   }
 
   private crossedCards(): THREE.BufferGeometry {
@@ -246,11 +247,12 @@ export class Vegetation {
       this.root.add(mesh); return mesh;
     };
     [this.grass, this.ferns, this.shrubs] = await Promise.all([
-      create('grass-tuft.png', this.crossedCards(), 11000),
-      create('fern.png', this.fernGeometry(), 300), create('shrub.png', this.shrubGeometry(), 380),
+      create('grass-tuft.png', this.crossedCards(), this.mobile ? 3500 : 11000),
+      create('fern.png', this.fernGeometry(), this.mobile ? 120 : 300),
+      create('shrub.png', this.shrubGeometry(), this.mobile ? 140 : 380),
     ]);
     this.flowers = new THREE.InstancedMesh(this.flowerGeometry(), new THREE.MeshStandardMaterial({
-      vertexColors: true, roughness: .95, side: THREE.DoubleSide }), 650);
+      vertexColors: true, roughness: .95, side: THREE.DoubleSide }), this.mobile ? 180 : 650);
     this.flowers.count = 0; this.flowers.frustumCulled = false;
     this.flowers.name = 'Small meadow daisies'; this.root.add(this.flowers);
     const bladeGeometry = new THREE.BufferGeometry(), bladeVertices: number[] = [], bladeColors: number[] = [], bladeIndices: number[] = [];
@@ -281,7 +283,7 @@ export class Vegetation {
         #include <normal_fragment_maps>
         normal=normalize(mix(normal,normalize(mat3(viewMatrix)*vec3(0.0,1.0,0.0)),.7));`);
     };
-    this.blades = new THREE.InstancedMesh(bladeGeometry, bladeMaterial, 18000);
+    this.blades = new THREE.InstancedMesh(bladeGeometry, bladeMaterial, this.mobile ? 4500 : 18000);
     this.blades.count = 0; this.blades.frustumCulled = false; this.blades.receiveShadow = true;
     this.blades.name = 'Fine bent alpine grass blades'; this.blades.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     this.root.add(this.blades);
@@ -304,7 +306,8 @@ export class Vegetation {
       if (bucket) candidates.push(...bucket);
     }
     const distance = (p: Placement): number => (p.x - position.x) ** 2 + (p.z - position.z) ** 2 + (p.y - position.y) ** 2 * .3;
-    const near = candidates.filter((t) => distance(t) < 100 ** 2).sort((a, b) => distance(a) - distance(b)).slice(0, 56);
+    const near = candidates.filter((t) => distance(t) < (this.mobile ? 65 : 100) ** 2)
+      .sort((a, b) => distance(a) - distance(b)).slice(0, this.mobile ? 20 : 56);
     for (const t of this.previousNearTrees) this.farVisibility[t.species].setX(t.farIndex, 1);
     for (let species = 0; species < 3; species++) {
       this.setPool(this.closePools[species], near.filter((t) => t.species === species));
@@ -313,10 +316,10 @@ export class Vegetation {
     for (const t of near) this.farVisibility[t.species].setX(t.farIndex, 0);
     this.previousNearTrees = near;
     if (this.rockPool) this.setPool(this.rockPool, this.rocks.filter((r) => distance(r) < 82 ** 2)
-      .sort((a, b) => distance(a) - distance(b)).slice(0, 36));
+      .sort((a, b) => distance(a) - distance(b)).slice(0, this.mobile ? 12 : 36));
     for (const [name, pool] of this.propPools) {
       const placements = this.field.metadata.props.filter((p) => p.model === name
-        && Math.hypot(p.position[0] - position.x, p.position[2] - position.z) < 200)
+        && Math.hypot(p.position[0] - position.x, p.position[2] - position.z) < (this.mobile ? 100 : 200))
         .map((p) => ({ x: p.position[0], y: p.position[1], z: p.position[2],
           sx: p.scale, sy: p.scale, sz: p.scale, yaw: p.yaw }));
       this.setPool(pool, placements);
@@ -326,7 +329,8 @@ export class Vegetation {
   private updateGroundcover(position: THREE.Vector3): void {
     if (!this.grass || !this.ferns || !this.shrubs || !this.flowers) return;
     const counters = [0, 0, 0, 0], meshes = [this.grass, this.ferns, this.shrubs, this.flowers];
-    const limits = [11000, 300, 380, 650], spacing = .82, radius = 65;
+    const limits = this.mobile ? [3500, 120, 140, 180] : [11000, 300, 380, 650];
+    const spacing = .82, radius = this.mobile ? 32 : 65;
     const cx = Math.floor(position.x / spacing), cz = Math.floor(position.z / spacing), cells = Math.ceil(radius / spacing);
     for (let gz = cz - cells; gz <= cz + cells; gz++) for (let gx = cx - cells; gx <= cx + cells; gx++) {
       const r = hash(gx, gz), x = (gx + hash(gx, gz, 1) * .85) * spacing,
@@ -338,7 +342,7 @@ export class Vegetation {
       const density = h < 635 ? .54 : .45;
       if (r > density) continue;
       let kind = 0;
-      if (road > 2.4 && distance < 37) {
+      if (road > 2.4 && distance < (this.mobile ? 26 : 37)) {
         if (r < .016 && h < 650) kind = 1;
         else if (r < .04 && h < 815) kind = 2;
         else if (r < .068) kind = 3;
@@ -346,7 +350,7 @@ export class Vegetation {
       if (counters[kind] >= limits[kind]) continue;
       const scale = (kind === 0 ? .56 + hash(gx, gz, 4) * .68 : .68 + hash(gx, gz, 4) * .63)
         * (h > 730 ? .78 : 1);
-      const fade = 1 - THREE.MathUtils.smoothstep(distance, 54, 65);
+      const fade = 1 - THREE.MathUtils.smoothstep(distance, this.mobile ? 26 : 54, radius);
       this.dummy.position.set(x, h - .025, z); this.dummy.rotation.set(0, hash(gx, gz, 3) * Math.PI * 2, 0);
       this.dummy.scale.set(scale, scale * (kind === 0 ? .29 : 1) * fade, scale); this.dummy.updateMatrix();
       const mesh = meshes[kind], index = counters[kind]++;
@@ -364,16 +368,18 @@ export class Vegetation {
     }
     if (!this.blades) return;
     let bladeCount = 0;
-    const step = .29, bladeRadius = 22, centerX = Math.floor(position.x / step), centerZ = Math.floor(position.z / step);
+    const step = .29, bladeRadius = this.mobile ? 12 : 22;
+    const bladeLimit = this.mobile ? 4500 : 18000;
+    const centerX = Math.floor(position.x / step), centerZ = Math.floor(position.z / step);
     const count = Math.ceil(bladeRadius / step);
     for (let gz = centerZ - count; gz <= centerZ + count; gz++) for (let gx = centerX - count; gx <= centerX + count; gx++) {
-      if (bladeCount >= 18000 || hash(gx, gz, 40) > .78) continue;
+      if (bladeCount >= bladeLimit || hash(gx, gz, 40) > .78) continue;
       const x = (gx + hash(gx, gz, 41)) * step, z = (gz + hash(gx, gz, 42)) * step;
       const distance = Math.hypot(x - position.x, z - position.z);
       if (distance > bladeRadius || this.field.getRoadDistance(x, z) < 1.32) continue;
       const h = this.field.getHeight(x, z);
       if (h > 970 || (this.field.getLakeRadius(x, z) < 1.4 && h < 800.35) || this.field.getSlope(x, z) > .94) continue;
-      const fade = 1 - THREE.MathUtils.smoothstep(distance, 17, bladeRadius);
+      const fade = 1 - THREE.MathUtils.smoothstep(distance, this.mobile ? 9 : 17, bladeRadius);
       const height = (.11 + hash(gx, gz, 43) * .14) * (h > 710 ? .78 : 1);
       this.dummy.position.set(x, h - .012, z); this.dummy.rotation.set(0, hash(gx, gz, 44) * Math.PI * 2, 0);
       this.dummy.scale.set(.73 + hash(gx, gz, 45) * .76, height * fade, height); this.dummy.updateMatrix();

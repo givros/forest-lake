@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { createWorld, type AlpineWorld } from './world/World';
-import { createTraveler, type TravelMode } from './actors/Traveler';
+import { createTraveler } from './actors/Traveler';
 import { createUI } from './ui';
 import { Input } from './core/Input';
 import { TrailAudio } from './core/TrailAudio';
@@ -9,6 +9,8 @@ import './style.css';
 
 type Traveler = Awaited<ReturnType<typeof createTraveler>>;
 const QA = new URLSearchParams(location.search).has('qa') || import.meta.env.DEV;
+const mobile = matchMedia('(pointer: coarse)').matches || (navigator.maxTouchPoints > 0 && Math.min(innerWidth, innerHeight) < 900);
+if (navigator.maxTouchPoints > 0) document.body.classList.add('has-touch');
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(63, innerWidth / innerHeight, .1, 14000);
 const audio = new TrailAudio();
@@ -17,7 +19,7 @@ let traveler: Traveler;
 let input: Input;
 let renderer: THREE.WebGLRenderer;
 let ready = false, playing = false, paused = false, arrived = false;
-let mode: TravelMode = 'walk';
+const mode = 'bike';
 let yaw = 0, pitch = .12, zoom = 6.2, heading = 0;
 let speed = 0, ascent = 0, distance = 0, routeProgress = 0;
 let elapsed = 0, updateHUD = 0, progressTime = 0, frameCount = 0, lastBlockToast = -20;
@@ -28,12 +30,12 @@ const look = new THREE.Vector3(), oldPosition = new THREE.Vector3();
 const routeLengths: number[] = [];
 const frameSamples: number[] = [];
 let totalRouteLength = 1;
-const lighting = createLighting(scene);
+const lighting = createLighting(scene, mobile);
 
 const ui = createUI({
   onStart: () => start(),
   onPause: () => pause(true), onResume: () => pause(false),
-  onRestart: () => restart(), onMode: (value: TravelMode) => setMode(value),
+  onRestart: () => restart(),
   onTravel: (destination: 'lake' | 'start') => travel(destination),
   onMute: (muted: boolean) => audio.setMuted(muted)
 });
@@ -50,13 +52,6 @@ function pause(value: boolean) {
   velocity.set(0, 0, 0); speed = 0;
   ui.setPaused(value); audio.setPaused(value);
   if (!value) void audio.unlock();
-}
-
-function setMode(value: TravelMode) {
-  if (!ready) return;
-  mode = value; traveler.setMode(mode); velocity.set(0, 0, 0); speed = 0;
-  ui.showToast(value === 'walk' ? 'Back on foot' : value === 'bike' ? 'Mountain bike · Shift to pedal faster' : 'On horseback · Shift to gallop');
-  pushHUD();
 }
 
 function routeDirection(atStart = true) {
@@ -83,7 +78,7 @@ function travel(destination: 'lake' | 'start') {
 function restart() {
   if (!ready) return;
   arrived = false; ascent = 0; distance = 0; routeProgress = 0;
-  mode = 'walk'; traveler.setMode(mode); pitch = .12; zoom = 6.2;
+  pitch = .12; zoom = 6.2;
   travel('start'); start();
 }
 
@@ -103,7 +98,7 @@ function updateRouteProgress() {
 }
 
 function pushHUD() {
-  ui.update({ altitude: position.y + 1500, ascent, distance, mode,
+  ui.update({ altitude: position.y + 1500, ascent, distance, speed,
     sprinting: !!input?.sprint && speed > .5, progress: routeProgress,
     heading: ((yaw * 180 / Math.PI) % 360 + 360) % 360 });
 }
@@ -124,9 +119,9 @@ function move(dt: number) {
     input.forward * Math.cos(yaw) + input.side * Math.sin(yaw));
   // Screen right is perpendicular to the camera's forward vector.
   if (intended.lengthSq() > 1) intended.normalize();
-  const maximum = mode === 'walk' ? (input.sprint ? 6.5 : 3.0) : mode === 'bike' ? (input.sprint ? 14 : 8.5) : (input.sprint ? 12 : 2.2);
+  const maximum = input.braking ? 0 : input.sprint ? 14 : 8.5;
   intended.multiplyScalar(maximum);
-  velocity.lerp(intended, 1 - Math.exp(-dt * (mode === 'bike' ? 4.5 : 10)));
+  velocity.lerp(intended, 1 - Math.exp(-dt * (input.braking ? 22 : 4.5)));
   if (velocity.lengthSq() < .0001) velocity.set(0, 0, 0);
   oldPosition.copy(position);
   candidate.copy(position).addScaledVector(velocity, dt);
@@ -154,13 +149,13 @@ function move(dt: number) {
   traveler.root.position.copy(position); traveler.root.rotation.y = heading;
   traveler.update(dt, speed, input.sprint, (heading-oldHeading)/Math.max(.001,dt));
   if (position.distanceTo(world.lakeArrival) < 18) reachLake();
-  audio.update(dt, speed, mode, position.y+1500);
+  audio.update(dt, speed, position.y+1500);
 }
 
 function setCamera(snap = false, dt = 1 / 60) {
-  const targetHeight = mode === 'horse' ? 2.0 : 1.3;
+  const targetHeight = 1.3;
   viewTarget.copy(position); viewTarget.y += targetHeight;
-  const radius = zoom + (mode === 'horse' ? 1.2 : .1);
+  const radius = zoom + .1;
   cameraGoal.set(position.x - Math.sin(yaw) * Math.cos(pitch) * radius,
     viewTarget.y + Math.sin(pitch) * radius,
     position.z - Math.cos(yaw) * Math.cos(pitch) * radius);
@@ -184,29 +179,29 @@ function setCamera(snap = false, dt = 1 / 60) {
 async function boot() {
   try {
     renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: QA });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); renderer.setSize(innerWidth, innerHeight);
+    renderer.setPixelRatio(Math.min(devicePixelRatio, mobile ? 1 : 1.5)); renderer.setSize(innerWidth, innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
-    renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
-    renderer.domElement.id = 'game-canvas'; renderer.domElement.setAttribute('aria-label', 'Playable alpine hiking environment');
+    renderer.shadowMap.enabled = !mobile; renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.domElement.id = 'game-canvas'; renderer.domElement.setAttribute('aria-label', 'Playable alpine cycling environment');
     document.body.prepend(renderer.domElement);
     input = new Input(renderer.domElement);
+    input.attachTouchControls(ui.touchControls);
     input.onOrbit = (dx, dy) => { yaw -= dx*.0045; pitch = THREE.MathUtils.clamp(pitch+dy*.0035, -.12, 1.03); };
     input.onZoom = amount => { zoom = THREE.MathUtils.clamp(zoom+amount*.65, 3.5, 12); };
     input.onAction = code => {
       if (code === 'Escape') { if (playing) pause(!paused); return; }
       if (!playing || paused) return;
-      if (code === 'Digit1') setMode('walk'); else if (code === 'Digit2') setMode('bike');
-      else if (code === 'Digit3') setMode('horse'); else if (code === 'KeyL') travel('lake');
+      if (code === 'KeyL') travel('lake');
       else if (code === 'Home') travel('start'); else if (code === 'KeyR') restart();
     };
     ui.setLoading(.06, 'Reading the alpine terrain');
     let loadProgress = .08;
-    world = await createWorld(scene, label => { loadProgress = Math.min(.74, loadProgress + .08); ui.setLoading(loadProgress, label); });
-    ui.setLoading(.78, 'Preparing your hiking companions');
+    world = await createWorld(scene, label => { loadProgress = Math.min(.74, loadProgress + .08); ui.setLoading(loadProgress, label); }, mobile);
+    ui.setLoading(.78, 'Preparing your mountain bike');
     traveler = await createTraveler(scene, label => ui.setLoading(.87, label));
     position.copy(world.start); position.y = world.getHeight(position.x, position.z);
-    traveler.root.position.copy(position); traveler.setMode(mode);
+    traveler.root.position.copy(position);
     routeDirection(); traveler.root.rotation.y = heading;
     routeLengths.push(0);
     for (let i = 1; i < world.route.length; i++) routeLengths.push(routeLengths[i-1] + world.route[i].distanceTo(world.route[i-1]));
@@ -239,7 +234,8 @@ async function boot() {
     if (QA) Object.defineProperty(window, '__FOREST_LAKE__', { value: {
       getState: () => ({ ready, playing, paused, arrived, mode, position:position.toArray(),
         altitude:position.y+1500, speed, ascent, distance, routeProgress, totalRouteLength,
-        camera:camera.position.toArray(), heading, cameraYaw:yaw,
+        camera:camera.position.toArray(), heading, cameraYaw:yaw, cameraPitch:pitch, cameraZoom:zoom,
+        input:{forward:input.forward,side:input.side,boost:input.sprint,brake:input.braking}, mobile,
         ground:world.getHeight(position.x,position.z), waterLevel:world.waterLevel,
         start:world.start.toArray(), lake:world.lakeArrival.toArray(),
         render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,

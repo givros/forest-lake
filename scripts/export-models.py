@@ -207,20 +207,6 @@ def export(name,objects,animated=False):
     REPORT[name]=record;print('WEB_ASSET '+json.dumps(record),flush=True)
 
 
-def horse():
-    bpy.ops.wm.open_mainfile(filepath=str(SOURCE/'Mounts/AlpineHorse.blend'))
-    arm=next(o for o in bpy.data.objects if o.type=='ARMATURE')
-    mesh=next(o for o in bpy.data.objects if o.type=='MESH')
-    parent=bpy.data.objects.new('HorseModel',None);bpy.context.collection.objects.link(parent);parent.matrix_world=R
-    arm.parent=parent
-    for action in list(bpy.data.actions):
-        if 'Jump' in action.name:bpy.data.actions.remove(action)
-        else:action.name=action.name.replace('A_AlpineHorse_','')
-    arm.animation_data.action=bpy.data.actions['Idle'];arm.animation_data.action_slot=arm.animation_data.action.slots[0]
-    bpy.context.scene.frame_set(0)
-    export('horse',[parent,arm,mesh],True)
-
-
 def bicycle():
     bpy.ops.wm.open_mainfile(filepath=str(SOURCE/'Mounts/AlpineMountainBike.blend'))
     objects=[obj for obj in bpy.data.objects if obj.type=='MESH']
@@ -435,10 +421,7 @@ def hiker():
 
 
 def credits():
-    items=[{'files':['horse.glb'],'author':'Quaternius','source':'Ultimate Animated Animal Pack',
-        'source_url':'https://quaternius.com/packs/ultimateanimatedanimals.html','license':'CC0-1.0',
-        'modifications':'Normalized original horse rig; baked Idle/Walk/Gallop; original project saddle, blanket, reins and bridle.'},
-        {'files':['conifer-a.glb','conifer-b.glb','conifer-c.glb','conifer-a-impostor.png','conifer-b-impostor.png','conifer-c-impostor.png'],
+    items=[{'files':['conifer-a.glb','conifer-b.glb','conifer-c.glb','conifer-a-impostor.png','conifer-b-impostor.png','conifer-c-impostor.png'],
         'author':'Poly Haven','source':'fir_tree_01','source_url':'https://polyhaven.com/a/fir_tree_01',
         'license':'CC0-1.0','license_url':'https://polyhaven.com/license','modifications':'Original local preparation, mesh simplification, embedded reduced textures and original transparent renders.'},
         {'files':['rock-a.glb'],'author':'Poly Haven','source':'boulder_01','source_url':'https://polyhaven.com/a/boulder_01',
@@ -455,6 +438,6 @@ if __name__=='__main__':
     if 'impostors' in args:
         render_web_impostors()
         sys.exit(0)
-    for name,function in [('horse',horse),('bicycle',bicycle),('nature',nature),('props',props),('hiker',hiker)]:
+    for name,function in [('bicycle',bicycle),('nature',nature),('props',props),('hiker',hiker)]:
         if 'all' in args or name in args:function()
     credits()

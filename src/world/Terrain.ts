@@ -24,7 +24,9 @@ export class Terrain {
   private water?: THREE.Mesh;
   private lastCenter = new THREE.Vector3(Infinity, 0, 0);
 
-  constructor(private readonly field: Heightfield) { this.root.name = 'Alpine terrain and glacial lake'; }
+  constructor(private readonly field: Heightfield, private readonly mobile = false) {
+    this.root.name = 'Alpine terrain and glacial lake';
+  }
 
   async build(massifBuffer: ArrayBuffer, route: THREE.Vector3[]): Promise<void> {
     const [turf, dry, rock, trail, floor, ecology, native] = await Promise.all([
@@ -225,7 +227,9 @@ export class Terrain {
     for (const tile of this.tiles) {
       const distance = Math.hypot(Math.max(0, Math.abs(position.x - tile.x) - 94.5),
         Math.max(0, Math.abs(position.z - tile.z) - 94.5));
-      const stride = distance < 48 ? strides[0] : distance < 240 ? strides[1] : distance < 650 ? strides[2] : strides[3];
+      const stride = distance < (this.mobile ? 12 : 48) ? strides[0]
+        : distance < (this.mobile ? 120 : 240) ? strides[1]
+        : distance < (this.mobile ? 360 : 650) ? strides[2] : strides[3];
       if (stride === tile.level) continue;
       if (!tile.geometries.has(stride)) tile.geometries.set(stride, this.makeTile(tile.ix, tile.iy, stride));
       tile.mesh.geometry = tile.geometries.get(stride)!; tile.level = stride;

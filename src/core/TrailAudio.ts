@@ -1,4 +1,4 @@
-/** Quiet original wind, footsteps and riding sounds, synthesized locally. */
+/** Quiet original wind and bicycle tire sounds, synthesized locally. */
 export class TrailAudio {
   private context?: AudioContext;
   private master?: GainNode;
@@ -47,18 +47,18 @@ export class TrailAudio {
       tone.connect(gain).connect(this.master); tone.start(c.currentTime + offset); tone.stop(c.currentTime + offset + .52);
     }
   }
-  update(dt: number, speed: number, mode: string, altitude: number) {
+  update(dt: number, speed: number, altitude: number) {
     if (!this.context || !this.master || !this.noise || this.paused || this.muted) return;
     const c = this.context;
     this.wind?.gain.setTargetAtTime(.09 + Math.max(0, altitude - 1500) / 18000 + speed * .0015, c.currentTime, .5);
-    this.step += dt * (mode === 'horse' ? Math.max(1.8, speed * .45) : speed * .55);
+    this.step += dt * speed * .55;
     if (speed > .25 && this.step >= 1) {
       this.step %= 1;
       const source = c.createBufferSource(), filter = c.createBiquadFilter(), gain = c.createGain();
       source.buffer = this.noise;
-      filter.type = 'bandpass'; filter.frequency.value = mode === 'horse' ? 260 : mode === 'bike' ? 1600 : 750;
+      filter.type = 'bandpass'; filter.frequency.value = 1600;
       filter.Q.value = .6;
-      const volume = mode === 'bike' ? .05 : mode === 'horse' ? .34 : .18;
+      const volume = .05;
       gain.gain.setValueAtTime(volume, c.currentTime);
       gain.gain.exponentialRampToValueAtTime(.001, c.currentTime + .13);
       source.connect(filter).connect(gain).connect(this.master); source.start(0, Math.random()); source.stop(c.currentTime + .15);

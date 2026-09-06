@@ -2,16 +2,6 @@
   "assets": [
     {
       "files": [
-        "horse.glb"
-      ],
-      "author": "Quaternius",
-      "source": "Ultimate Animated Animal Pack",
-      "source_url": "https://quaternius.com/packs/ultimateanimatedanimals.html",
-      "license": "CC0-1.0",
-      "modifications": "Normalized original horse rig; baked Idle/Walk/Gallop; original project saddle, blanket, reins and bridle."
-    },
-    {
-      "files": [
         "conifer-a.glb",
         "conifer-b.glb",
         "conifer-c.glb",

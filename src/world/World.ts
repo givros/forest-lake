@@ -19,7 +19,7 @@ export interface AlpineWorld {
   dispose(): void;
 }
 
-export async function createWorld(scene: THREE.Scene, onProgress?: (text: string) => void): Promise<AlpineWorld> {
+export async function createWorld(scene: THREE.Scene, onProgress?: (text: string) => void, mobile = false): Promise<AlpineWorld> {
   onProgress?.('Reading the alpine heightfield');
   const response = await fetch(worldURL('world.json'));
   if (!response.ok) throw new Error('Unable to load the alpine world manifest');
@@ -31,7 +31,7 @@ export async function createWorld(scene: THREE.Scene, onProgress?: (text: string
   const field = new Heightfield(metadata, new Uint16Array(native), new Uint16Array(outer), new Uint8Array(road));
   const routeData = new Float32Array(routeBuffer), route: THREE.Vector3[] = [];
   for (let i = 0; i < routeData.length; i += 3) route.push(new THREE.Vector3(routeData[i], routeData[i + 1], routeData[i + 2]));
-  const terrain = new Terrain(field), vegetation = new Vegetation(field, new Float32Array(forest), new Float32Array(rocks));
+  const terrain = new Terrain(field, mobile), vegetation = new Vegetation(field, new Float32Array(forest), new Float32Array(rocks), mobile);
   onProgress?.('Shaping the connected mountains and lake');
   await terrain.build(massif, route);
   await vegetation.build(onProgress);

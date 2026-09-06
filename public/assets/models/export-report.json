@@ -37,18 +37,6 @@
     "materials": 11,
     "embedded_images": 0
   },
-  "horse": {
-    "file": "horse.glb",
-    "bytes": 533928,
-    "triangles": 9134,
-    "animation_clips": [
-      "Gallop",
-      "Idle",
-      "Walk"
-    ],
-    "materials": 11,
-    "embedded_images": 0
-  },
   "mountain-bike": {
     "file": "mountain-bike.glb",
     "bytes": 680620,
