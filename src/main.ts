@@ -98,9 +98,7 @@ function updateRouteProgress() {
 }
 
 function pushHUD() {
-  ui.update({ altitude: position.y + 1500, ascent, distance, speed,
-    sprinting: !!input?.sprint && speed > .5, progress: routeProgress,
-    heading: ((yaw * 180 / Math.PI) % 360 + 360) % 360 });
+  ui.update({ heading: ((yaw * 180 / Math.PI) % 360 + 360) % 360 });
 }
 
 function canMove(x: number, z: number) {

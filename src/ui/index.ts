@@ -12,12 +12,6 @@ export interface UICallbacks {
 }
 
 export interface CyclingUIState {
-  altitude: number;
-  ascent: number;
-  distance: number;
-  speed: number;
-  sprinting: boolean;
-  progress: number;
   heading: number;
 }
 
@@ -38,7 +32,6 @@ const icons = {
 };
 
 const clamp01 = (value: number) => Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0));
-const formatMeters = (value: number) => Math.round(Number.isFinite(value) ? value : 0).toLocaleString('en-GB');
 
 /** One DOM overlay; game state and all movement remain owned by the caller. */
 export function createUI(callbacks: UICallbacks) {
@@ -75,19 +68,6 @@ export function createUI(callbacks: UICallbacks) {
     <div class="scene-caption" data-part="scene-caption"><span class="caption-line"></span><span>SUMMER IN THE HIGH COUNTRY</span></div>
 
     <div class="game-hud" data-part="hud" hidden>
-      <section class="route-hud" aria-label="Current ride">
-        <div class="hud-objective"><span class="eyebrow">DESTINATION</span><span class="objective-dot" aria-hidden="true"></span></div>
-        <h2>Lac des Aiguilles</h2>
-        <div class="altitude-line"><span class="altitude-value" data-part="altitude">—</span><span class="altitude-unit">m<span>ALTITUDE</span></span></div>
-        <div class="route-progress" data-part="route-progress" role="progressbar" aria-label="Route progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="route-progress-fill" data-part="route-fill"></span><span class="route-progress-ticks" aria-hidden="true"></span></div>
-        <div class="route-endpoints"><span>1,500 m</span><span>2,300 m</span></div>
-        <div class="ride-readings"><span><span class="reading-arrow" aria-hidden="true">↗</span> <strong data-part="ascent">—</strong> m climbed</span><span><strong data-part="distance">—</strong> <span data-part="distance-unit">m</span> traveled</span></div>
-        <div class="ride-cluster" aria-label="Cycling speed">
-          <span class="ride-symbol">${icons.bike}</span>
-          <span class="speed-value" data-part="speed">—</span><span class="speed-unit">km/h</span>
-          <span class="movement-status"><span class="status-dot" aria-hidden="true"></span><span data-part="movement-status">CYCLING</span></span>
-        </div>
-      </section>
       <div class="heading-hud" aria-label="Heading"><span data-part="compass">${icons.compass}</span><span data-part="heading-cardinal">N</span><span class="heading-degrees" data-part="heading-degrees">000°</span></div>
       <div class="movement-hint desktop-help" aria-hidden="true"><span><kbd>WASD</kbd> / <kbd>ZQSD</kbd> Pedal & steer</span><span><kbd>SHIFT</kbd> Boost · <kbd>SPACE</kbd> Brake</span><span data-part="camera-hint">Drag to look · Scroll to zoom</span></div>
       <div class="travel-controls hud-travel" role="group" aria-label="Quick travel">
@@ -266,22 +246,10 @@ export function createUI(callbacks: UICallbacks) {
     },
     setError: showError,
     update(value: CyclingUIState) {
-      part('altitude').textContent = formatMeters(value.altitude);
-      part('ascent').textContent = formatMeters(Math.max(0, value.ascent));
-      const distance = Math.max(0, Number.isFinite(value.distance) ? value.distance : 0);
-      part('distance').textContent = distance >= 1000 ? (distance / 1000).toFixed(1) : formatMeters(distance);
-      part('distance-unit').textContent = distance >= 1000 ? 'km' : 'm';
-      const progress = clamp01(value.progress);
-      part('route-fill').style.width = `${progress * 100}%`;
-      part('route-progress').setAttribute('aria-valuenow', String(Math.round(progress * 100)));
       const heading = ((Number.isFinite(value.heading) ? value.heading : 0) % 360 + 360) % 360;
       part('heading-cardinal').textContent = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(heading / 45) % 8];
       part('heading-degrees').textContent = `${(Math.round(heading) % 360).toString().padStart(3, '0')}°`;
       part('compass').style.transform = `rotate(${-heading}deg)`;
-      const speed = Math.max(0, Number.isFinite(value.speed) ? value.speed : 0);
-      part('speed').textContent = Math.round(speed * 3.6).toString();
-      part('movement-status').textContent = value.sprinting ? 'BOOSTING' : 'CYCLING';
-      element.classList.toggle('is-sprinting', value.sprinting);
     },
     setPaused(paused: boolean) {
       if (state.paused === paused) return;
