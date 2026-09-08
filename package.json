@@ -7,7 +7,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node scripts/world.test.mjs",
+    "test": "node scripts/world.test.mjs && node scripts/bicycle-grounding.test.mjs",
     "verify:assets": "node scripts/verify-assets.mjs"
   },
   "dependencies": {

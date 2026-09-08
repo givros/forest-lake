@@ -1,9 +1,12 @@
 import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/addons/loaders/GLTFLoader.js';
+import { BicycleGrounding, bicycleWheels, type SurfaceHeight } from './BicycleGrounding';
 
 export interface Traveler {
   root: THREE.Group;
   update(dt: number, speed: number, isBoosting: boolean, turnRate?: number): void;
+  alignToGround(position: THREE.Vector3, heading: number, heightAt: SurfaceHeight): void;
+  getGroundContact(): { height: number; pitch: number; frontGap: number; rearGap: number };
   dispose(): void;
 }
 
@@ -11,7 +14,7 @@ const X = new THREE.Vector3(1, 0, 0);
 const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
 const clamp = THREE.MathUtils.clamp;
 
-/** Meter-scale, +Z-forward cyclist. The caller owns root position and yaw. */
+/** Meter-scale, +Z-forward cyclist. Visual ground contact is separate from movement. */
 export async function createTraveler(
   scene: THREE.Scene | THREE.Group,
   onProgress?: (message: string) => void,
@@ -24,6 +27,7 @@ export async function createTraveler(
   };
   const [human, bicycle] = await Promise.all([load('hiker'), load('mountain-bike')]);
   const root = new THREE.Group(); root.name = 'AlpineTraveler';
+  root.rotation.order = 'YXZ';
   scene.add(root); root.add(human.scene, bicycle.scene);
   for (const model of [human.scene, bicycle.scene]) {
     model.traverse((object) => {
@@ -97,16 +101,24 @@ export async function createTraveler(
   })) as Record<string, THREE.Object3D>;
   const originalRotations = Object.fromEntries(Object.entries(parts).map(([name, part]) => [name, part.quaternion.clone()]));
   const bikeAnchor = (point: THREE.Vector3) => root.worldToLocal(bicycle.scene.localToWorld(point.clone()));
+  const grounding = new BicycleGrounding();
   let pedal = 0, wheel = 0;
 
   const traveler: Traveler = {
     root,
+    alignToGround(position, heading, heightAt) {
+      const pose = grounding.solve(position.x, position.z, heading, bicycle.scene.rotation.z, heightAt);
+      root.position.set(position.x, pose.height, position.z);
+      root.rotation.set(pose.pitch, heading, 0, 'YXZ');
+      root.updateMatrixWorld(true);
+    },
+    getGroundContact: () => ({ ...grounding.pose }),
     update(dt, speed, isBoosting, turnRate = 0) {
       dt = clamp(dt, 0, .10); const movement = Math.abs(speed);
       root.updateMatrixWorld(true);
       // One complete crank revolution per five traveled meters. Sampling the
       // same phase keeps the authored pose and both IK pedal contacts in sync.
-      wheel += speed * dt / .35; pedal += speed * dt / 5.0 * Math.PI * 2;
+      wheel += speed * dt / (bicycleWheels.rimRadius + bicycleWheels.tireRadius); pedal += speed * dt / 5.0 * Math.PI * 2;
       pedalAction.time = THREE.MathUtils.euclideanModulo(pedal / (Math.PI * 2), 1) * pedalClip.duration;
       humanMixer.update(0);
       bicycle.scene.rotation.z = -clamp(turnRate * movement * .012, -.12, .12);

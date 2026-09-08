@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { Heightfield, worldURL } from './Heightfield';
+import { SurfaceHeight } from './SurfaceHeight';
 
 type TerrainTile = { mesh: THREE.Mesh; geometries: Map<number, THREE.BufferGeometry>;
   x: number; z: number; ix: number; iy: number; level: number };
@@ -23,10 +24,14 @@ export class Terrain {
   private clock = { value: 0 };
   private water?: THREE.Mesh;
   private lastCenter = new THREE.Vector3(Infinity, 0, 0);
+  private readonly surface: SurfaceHeight;
 
   constructor(private readonly field: Heightfield, private readonly mobile = false) {
     this.root.name = 'Alpine terrain and glacial lake';
+    this.surface = new SurfaceHeight(field);
   }
+
+  getSurfaceHeight = (x: number, z: number): number => this.surface.getHeight(x, z);
 
   async build(massifBuffer: ArrayBuffer, route: THREE.Vector3[]): Promise<void> {
     const [turf, dry, rock, trail, floor, ecology, native] = await Promise.all([
@@ -168,6 +173,7 @@ export class Terrain {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2)); g.setIndex(indices); g.computeVertexNormals();
+    this.surface.indexTrail(g);
     const mat = new THREE.MeshStandardMaterial({ map: texture, color: 0xb8a790, roughness: .99,
       transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, side: THREE.DoubleSide });
     mat.onBeforeCompile = (shader) => {
@@ -237,6 +243,7 @@ export class Terrain {
   }
 
   dispose(): void {
+    this.surface.dispose();
     const geometries = new Set<THREE.BufferGeometry>();
     this.root.traverse((o) => { if (o instanceof THREE.Mesh) geometries.add(o.geometry); });
     for (const t of this.tiles) for (const g of t.geometries.values()) geometries.add(g);

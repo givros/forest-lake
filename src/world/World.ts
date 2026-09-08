@@ -13,6 +13,8 @@ export interface AlpineWorld {
   readonly routeLength: number;
   readonly elevationGain: number;
   getHeight(x: number, z: number): number;
+  /** Full-detail terrain triangles plus the visible trail ribbon near the player. */
+  getSurfaceHeight(x: number, z: number): number;
   isWalkable(x: number, z: number): boolean;
   resolveMovement(from: THREE.Vector3, to: THREE.Vector3): THREE.Vector3;
   update(dt: number, playerPosition: THREE.Vector3, camera: THREE.Camera): void;
@@ -44,7 +46,7 @@ export async function createWorld(scene: THREE.Scene, onProgress?: (text: string
   return {
     route, start, lakeArrival, lakeCenter, waterLevel: metadata.waterLevel,
     routeLength: metadata.routeLength, elevationGain: metadata.elevationGain,
-    getHeight: field.getHeight, isWalkable: field.isWalkable,
+    getHeight: field.getHeight, getSurfaceHeight: terrain.getSurfaceHeight, isWalkable: field.isWalkable,
     resolveMovement(from, to) {
       const point = vegetation.resolveTrunks(from, to);
       if (!field.isWalkable(point.x, point.z)) {

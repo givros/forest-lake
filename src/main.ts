@@ -69,7 +69,8 @@ function travel(destination: 'lake' | 'start') {
     yaw = Math.atan2(world.lakeCenter.x - position.x, world.lakeCenter.z - position.z);
     heading = yaw;
   } else routeDirection();
-  traveler.root.position.copy(position); traveler.root.rotation.y = heading;
+  traveler.update(0, 0, false);
+  traveler.alignToGround(position, heading, world.getSurfaceHeight);
   setCamera(true); updateRouteProgress(); pushHUD();
   ui.showToast(destination === 'lake' ? 'Lac des Aiguilles · 2,300 m' : 'Back at the trailhead · 1,500 m');
   if (destination === 'lake') reachLake();
@@ -144,8 +145,8 @@ function move(dt: number) {
     const difference = Math.atan2(Math.sin(target-heading), Math.cos(target-heading));
     heading += difference * (1-Math.exp(-dt*9));
   }
-  traveler.root.position.copy(position); traveler.root.rotation.y = heading;
   traveler.update(dt, speed, input.sprint, (heading-oldHeading)/Math.max(.001,dt));
+  traveler.alignToGround(position, heading, world.getSurfaceHeight);
   if (position.distanceTo(world.lakeArrival) < 18) reachLake();
   audio.update(dt, speed, position.y+1500);
 }
@@ -199,8 +200,7 @@ async function boot() {
     ui.setLoading(.78, 'Preparing your mountain bike');
     traveler = await createTraveler(scene, label => ui.setLoading(.87, label));
     position.copy(world.start); position.y = world.getHeight(position.x, position.z);
-    traveler.root.position.copy(position);
-    routeDirection(); traveler.root.rotation.y = heading;
+    routeDirection(); traveler.alignToGround(position, heading, world.getSurfaceHeight);
     routeLengths.push(0);
     for (let i = 1; i < world.route.length; i++) routeLengths.push(routeLengths[i-1] + world.route[i].distanceTo(world.route[i-1]));
     totalRouteLength = routeLengths[routeLengths.length-1];
@@ -212,7 +212,11 @@ async function boot() {
     renderer.setAnimationLoop((time: number) => {
       const realDt = Math.max(0, (time-last)/1000); last = time;
       const dt = Math.min(realDt, .05); elapsed += dt;
-      if (playing && !paused) move(dt); else traveler.update(dt, 0, false, 0);
+      if (playing && !paused) move(dt);
+      else {
+        traveler.update(dt, 0, false, 0);
+        traveler.alignToGround(position, heading, world.getSurfaceHeight);
+      }
       setCamera(false, dt); lighting.update(position);
       world.update(paused ? 0 : dt, position, camera);
       progressTime += dt; updateHUD += dt;
@@ -235,6 +239,7 @@ async function boot() {
         camera:camera.position.toArray(), heading, cameraYaw:yaw, cameraPitch:pitch, cameraZoom:zoom,
         input:{forward:input.forward,side:input.side,boost:input.sprint,brake:input.braking}, mobile,
         ground:world.getHeight(position.x,position.z), waterLevel:world.waterLevel,
+        wheelContact:traveler.getGroundContact(),
         start:world.start.toArray(), lake:world.lakeArrival.toArray(),
         render:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,
           geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures},
